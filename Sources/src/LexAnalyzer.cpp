@@ -17,8 +17,8 @@ LexAnalyzer::LexAnalyzer(istream& infile) {
 
         tokenmap[lexeme] = token;
     }
-    for (auto& pair: tokenmap){
-        cout << pair.first << ":==:" << pair.second << endl;
+    for (pair<const string, string>& p: tokenmap){
+        cout << p.first << ":==:" << p.second << endl;
     }
 }
 

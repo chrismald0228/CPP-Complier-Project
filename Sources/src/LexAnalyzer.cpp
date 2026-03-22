@@ -8,6 +8,13 @@
 // post: tokenmap has been populated - key: lexeme, value: token
 
 LexAnalyzer::LexAnalyzer(istream& infile) {
+    populateTokenmap(infile);
+    for (pair<const string, string>& p: tokenmap){
+        cout << p.first << ":==:" << p.second << endl;
+    }
+}
+
+void LexAnalyzer::populateTokenmap(istream& infile) {
     string line;
     while(getline(infile, line)) {
         vector<string> lex_pairs = split(line);
@@ -17,11 +24,7 @@ LexAnalyzer::LexAnalyzer(istream& infile) {
 
         tokenmap[lexeme] = token;
     }
-    for (pair<const string, string>& p: tokenmap){
-        cout << p.first << ":==:" << p.second << endl;
-    }
 }
-
 vector<string> LexAnalyzer::split(const string& line){
     stringstream stream(line);
     return vector<string>(

@@ -19,6 +19,7 @@ class LexAnalyzer {
 
         // other private methods
         vector<string> split(const string& line);
+        void populateTokenmap(istream& infile);
 
     public:
         LexAnalyzer(istream& infile);

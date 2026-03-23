@@ -18,8 +18,6 @@ class LexAnalyzer {
         vector<string> tokens;
 
         // other private methods
-        vector<string> split(const string& line);
-        void populateTokenmap(istream& infile);
         bool isValidId(const string& lexeme);
         bool isValidNumber(const string& lexeme);
         void pushToLexemes(string& lexeme);

@@ -9,28 +9,10 @@
 
 LexAnalyzer::LexAnalyzer(istream &infile)
 {
-    populateTokenmap(infile);
-}
-
-void LexAnalyzer::populateTokenmap(istream &infile)
-{
-    string line;
-    while (getline(infile, line))
-    {
-        vector<string> lex_pairs = split(line);
-
-        string token = lex_pairs[0];
-        string lexeme = lex_pairs[1];
-
+    string token, lexeme;
+    while(infile >> token >> lexeme) {
         tokenmap[lexeme] = token;
     }
-}
-vector<string> LexAnalyzer::split(const string &line)
-{
-    stringstream stream(line);
-    return vector<string>(
-        istream_iterator<string>{stream},
-        istream_iterator<string>{});
 }
 
 // pre: 1st parameter refers to an open text file that contains source
@@ -99,55 +81,61 @@ void LexAnalyzer::writeToFile(ostream &outfile) {
     cout << "success" << endl;
 }
 void LexAnalyzer::scanFile(istream &infile, ostream &outfile) {
+    string currentLine;
     string current = "";
-    char ch;
     bool inString = false;
 
-    while (infile.get(ch)) {
-        if (ch == '"') {
-            //first quote, add current lex to array and clear current
-            if (!current.empty() && !inString) {
-                pushToLexemes(current);
-                current.clear();
+    while (getline(infile, currentLine)) {
+        for(int i=0;i<currentLine.length();i++){
+            char ch = currentLine[i];
+            
+            if (ch == '"') {
+                //first quote, add current lex to array and clear current
+                if (!current.empty() && !inString) {
+                    pushToLexemes(current);
+                    current.clear();
+                }
+                //push " to current, needed for final checks
+                current += ch;
+                //inString, so the " we hit is closing
+                if (inString) {
+                    pushToLexemes(current);
+                    current.clear();
+                    inString = false;
+                } else {
+                    inString = true;
+                }
             }
-            //push " to current, needed for final checks
-            current += ch;
-            //inString, so the " we hit is closing
-            if (inString) {
-                pushToLexemes(current);
-                current.clear();
-                inString = false;
-            } else {
-                inString = true;
+            else if (inString) {
+                current += ch;
             }
-        }
-        else if (inString) {
-            current += ch;
-        }
-        else if (isspace(ch)) {
-            if (!current.empty()) {
-                pushToLexemes(current);
-                current.clear();
+            else if (isspace(ch)) {
+                if (!current.empty()) {
+                    pushToLexemes(current);
+                    current.clear();
+                }
             }
-        }
-        else if (ispunct(ch)) {
-            if (!current.empty()) {
-                pushToLexemes(current);
-                current.clear();
-            }
+            //fix string lex reader; " is not a delimiter, so there must be a space after the last one
+            //rewrite ispunct for strings
+            else if (ispunct(ch) || ch =='!') {
+                if (!current.empty()) {
+                    pushToLexemes(current);
+                    current.clear();
+                }
 
-            string op(1, ch);
+                string op(1, ch);
 
-            char next = infile.peek();
-            string twoCharOp = op + next;
-            if (tokenmap.count(twoCharOp)) {
-                infile.get();
-                op = twoCharOp;
+                char next = currentLine[i+1];
+                string twoCharOp = op + next;
+                if (tokenmap.count(twoCharOp)) {
+                    i++;
+                    op = twoCharOp;
+                }
+                pushToLexemes(op);
             }
-            pushToLexemes(op);
-        }
-        else {
-            current += ch;
+            else {
+                current += ch;
+            }
         }
     }
 

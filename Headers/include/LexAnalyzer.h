@@ -22,8 +22,8 @@ class LexAnalyzer {
         void populateTokenmap(istream& infile);
         bool isValidId(const string& lexeme);
         bool isValidNumber(const string& lexeme);
-        bool isValidStrBoundary(char c);
-
+        void pushToLexemes(string& lexeme);
+        void writeToFile(ostream& outfile);
     public:
         LexAnalyzer(istream& infile);
         // pre: parameter refers to open data file consisting of token and

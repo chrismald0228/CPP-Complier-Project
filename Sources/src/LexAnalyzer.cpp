@@ -57,39 +57,64 @@ bool LexAnalyzer::isValidNumber(const string& lexeme) {
     }
     return true;
 }
-bool LexAnalyzer::isValidStrBoundary(char c) {
-    return c== '\0' || isspace(c) || ispunct(c);
+
+void LexAnalyzer::pushToLexemes(string& lexeme) {
+    if(tokenmap.count(lexeme)){
+        lexemes.push_back(lexeme);
+        tokens.push_back(tokenmap[lexeme]);
+    } 
+    else if(lexeme.front()=='"') {
+        if(lexeme.back() != '"') {
+            lexemes.push_back("error");
+            tokens.push_back(lexeme + ": unclosed string");
+        }
+        else{
+            lexemes.push_back(lexeme);
+            tokens.push_back("t_text");
+        }
+    }
+    else if(isValidId(lexeme)) {
+        lexemes.push_back(lexeme);
+        tokens.push_back("t_id");
+    }
+    else if(isValidNumber(lexeme)) {
+        lexemes.push_back(lexeme);
+        tokens.push_back("t_number");
+    }
+    else {
+        lexemes.push_back("error");
+        tokens.push_back(lexeme + ": unknown lexeme");
+    }
 }
 
-void LexAnalyzer::scanFile(istream &infile, ostream &outfile)
-{
-    vector<string> lexemes;
+void LexAnalyzer::writeToFile(ostream &outfile) {
+    for(int i=0;i<lexemes.size();i++) {
+        if(lexemes[i] == "error") {
+            outfile << tokens[i] << " " << lexemes[i] << endl;
+            cout << "fail" << endl;
+            return;
+        }
+        outfile << tokens[i] << " " << lexemes[i] << endl;
+    }
+    cout << "success" << endl;
+}
+void LexAnalyzer::scanFile(istream &infile, ostream &outfile) {
     string current = "";
     char ch;
-    char prevChar = '\0';
     bool inString = false;
-
-    bool error = false;
-    string errorMsg = "";
-    int errorIndex = -1;
 
     while (infile.get(ch)) {
         if (ch == '"') {
-            if (!inString && !current.empty() && !isValidStrBoundary(prevChar) && !error) {
-                error = true;
-                errorMsg = "ERROR : invalid boundary before string";
-                errorIndex = lexemes.size();
-            }
-
+            //first quote, add current lex to array and clear current
             if (!current.empty() && !inString) {
-                lexemes.push_back(current);
+                pushToLexemes(current);
                 current.clear();
             }
-
+            //push " to current, needed for final checks
             current += ch;
-
+            //inString, so the " we hit is closing
             if (inString) {
-                lexemes.push_back(current);
+                pushToLexemes(current);
                 current.clear();
                 inString = false;
             } else {
@@ -101,79 +126,34 @@ void LexAnalyzer::scanFile(istream &infile, ostream &outfile)
         }
         else if (isspace(ch)) {
             if (!current.empty()) {
-                lexemes.push_back(current);
+                pushToLexemes(current);
                 current.clear();
             }
         }
         else if (ispunct(ch)) {
             if (!current.empty()) {
-                lexemes.push_back(current);
+                pushToLexemes(current);
                 current.clear();
             }
 
             string op(1, ch);
 
-            if (!infile.eof()) {
-                char next = infile.peek();
-                string twoCharOp = op + next;
-
-                if (tokenmap.count(twoCharOp)) {
-                    infile.get();
-                    op = twoCharOp;
-                }
+            char next = infile.peek();
+            string twoCharOp = op + next;
+            if (tokenmap.count(twoCharOp)) {
+                infile.get();
+                op = twoCharOp;
             }
-
-            lexemes.push_back(op);
+            pushToLexemes(op);
         }
         else {
             current += ch;
         }
-
-        prevChar = ch;
     }
 
     if (!current.empty()) {
-        lexemes.push_back(current);
+        pushToLexemes(current);
     }
 
-    // error if string was never closed
-    if (inString && !error) {
-        error = true;
-        errorMsg = "ERROR : unterminated string";
-        errorIndex = lexemes.size();
-    }
-
-    //throw error if any, print tokens/lexemes, assign id, number, strings
-    for (size_t i = 0; i < lexemes.size(); i++) {
-
-        if (error && i == (size_t)errorIndex) {
-            outfile << errorMsg << endl;
-            outfile << "Lexical analysis failed." << endl;
-            cout << "Scan failed." << endl;
-            return;
-        }
-
-        const string &lex = lexemes[i];
-
-        if (tokenmap.count(lex)) {
-            outfile << tokenmap[lex] << " " << lex << endl;
-        }
-        else if (lex.front() == '"' && lex.back() == '"') {
-            outfile << "t_text " << lex << endl;
-        }
-        else if (isValidNumber(lex)) {
-            outfile << "t_number " << lex << endl;
-        }
-        else if (isValidId(lex)) {
-            outfile << "t_id " << lex << endl;
-        }
-        else {
-            outfile << "ERROR : " << lex << endl;
-            outfile << "Lexical analysis failed." << endl;
-            cout << "Scan failed." << endl;
-            return;
-        }
-    }
-
-    cout << "Scan successful." << endl;
+    writeToFile(outfile);
 }

@@ -20,6 +20,9 @@ class LexAnalyzer {
         // other private methods
         vector<string> split(const string& line);
         void populateTokenmap(istream& infile);
+        bool isValidId(const string& lexeme);
+        bool isValidNumber(const string& lexeme);
+        bool isValidStrBoundary(char c);
 
     public:
         LexAnalyzer(istream& infile);

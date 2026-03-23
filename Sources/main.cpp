@@ -11,6 +11,6 @@ int main() {
     ifstream source("source.txt");
     ofstream sourcelexemes("sourcelexemes.txt");
     LexAnalyzer lexanalyzer(lexemes);
-    // lexanalyzer.scanFile(source, sourcelexemes);
+    lexanalyzer.scanFile(source, sourcelexemes);
     return 0;
 }

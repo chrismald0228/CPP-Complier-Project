@@ -1,7 +1,5 @@
 
 #include "LexAnalyzer.h"
-#include <sstream>
-#include <iterator>
 // pre: parameter refers to open data file consisting of token and
 // lexeme pairs i.e.  t_and and
 // Each pair appears on its own input line.
@@ -40,6 +38,16 @@ bool LexAnalyzer::isValidNumber(const string& lexeme) {
     return true;
 }
 
+bool LexAnalyzer::isSymbol(char ch) {
+    for(pair<string, string> p: tokenmap) {
+        if(p.second.rfind("s_", 0) == 0) {
+            if(p.first[0] == ch) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
 void LexAnalyzer::pushToLexemes(string& lexeme) {
     if(tokenmap.count(lexeme)){
         lexemes.push_back(lexeme);
@@ -116,8 +124,7 @@ void LexAnalyzer::scanFile(istream &infile, ostream &outfile) {
                 }
             }
             //fix string lex reader; " is not a delimiter, so there must be a space after the last one
-            //rewrite ispunct for strings
-            else if (ispunct(ch) || ch =='!') {
+            else if (isSymbol(ch)) {
                 if (!current.empty()) {
                     pushToLexemes(current);
                     current.clear();
@@ -142,6 +149,5 @@ void LexAnalyzer::scanFile(istream &infile, ostream &outfile) {
     if (!current.empty()) {
         pushToLexemes(current);
     }
-
     writeToFile(outfile);
 }

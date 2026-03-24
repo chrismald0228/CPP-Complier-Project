@@ -22,6 +22,7 @@ class LexAnalyzer {
         bool isValidNumber(const string& lexeme);
         void pushToLexemes(string& lexeme);
         void writeToFile(ostream& outfile);
+        bool isSymbol(char ch);
     public:
         LexAnalyzer(istream& infile);
         // pre: parameter refers to open data file consisting of token and

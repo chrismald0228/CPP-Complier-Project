@@ -37,8 +37,7 @@ bool LexAnalyzer::isValidNumber(const string& lexeme) {
     }
     return true;
 }
-//searches through tokenmap and compares the symbols(s_ tokens) to the char passed in
-bool LexAnalyzer::isSymbol(char ch) {
+bool LexAnalyzer::isValidSymbol(const char& ch) {
     for(pair<string, string> p: tokenmap) {
         if(p.second.rfind("s_", 0) == 0) {
             if(p.first[0] == ch) {
@@ -48,40 +47,62 @@ bool LexAnalyzer::isSymbol(char ch) {
     }
     return false;
 }
-void LexAnalyzer::pushToLexemes(string& lexeme) {
+
+void LexAnalyzer::pushToLexemes(string& lexeme, bool& spaceBefore, bool tEndValid) {
+    bool tValid = tEndValid && (spaceBefore || (!tokens.empty() && tokens.back()[0] == 's'));
     if(tokenmap.count(lexeme)){
-        lexemes.push_back(lexeme);
-        tokens.push_back(tokenmap[lexeme]);
+        if (tokenmap[lexeme][0] == 't') {
+            if (tValid) {
+                lexemes.push_back(lexeme);
+                tokens.push_back(tokenmap[lexeme]);
+            } else {
+                lexemes.push_back("error");
+                tokens.push_back(lexeme + ": invalid t_ lexeme");
+            }
+        } else {
+            lexemes.push_back(lexeme);
+            tokens.push_back(tokenmap[lexeme]);
+        }
     } 
     else if(lexeme.front()=='"') {
-        if(lexeme.back() != '"') {
+
+        if(lexeme.back() != '"' || lexeme.length() == 1) {
             lexemes.push_back("error");
             tokens.push_back(lexeme + ": unclosed string");
         }
-        else{
-            lexemes.push_back(lexeme.substr(1,lexeme.length() -2));
+        else if (tValid) {
+            lexemes.push_back(lexeme.substr(1, lexeme.length() - 2));
             tokens.push_back("t_text");
+        } else {
+            lexemes.push_back("error");
+            tokens.push_back(lexeme + ": invalid t_ token ");
         }
     }
     else if(isValidId(lexeme)) {
-        lexemes.push_back(lexeme);
-        tokens.push_back("t_id");
+        if (tValid) {
+            lexemes.push_back(lexeme);
+            tokens.push_back("t_id");
+        } else {
+            lexemes.push_back("error");
+            tokens.push_back(lexeme + ": invalid t_ token");
+        }
     }
     else if(isValidNumber(lexeme)) {
-        lexemes.push_back(lexeme);
-        tokens.push_back("t_number");
+        if (tValid) {
+            lexemes.push_back(lexeme);
+            tokens.push_back("t_number");
+        } else {
+            lexemes.push_back("error");
+            tokens.push_back(lexeme + ": invalid t_ token");
+        }
     }
     else {
         lexemes.push_back("error");
         tokens.push_back(lexeme + ": unknown lexeme");
     }
+    spaceBefore = false;
 }
-//error for string delimiter is found during line parsing
-//this function pushes the error to the lexeme/token parallel array
-void LexAnalyzer::pushStringDelimiterError(string& errString) {
-    lexemes.push_back("error");
-    tokens.push_back(errString + ": string delimiter error");
-}
+
 void LexAnalyzer::writeToFile(ostream &outfile) {
     for(int i=0;i<lexemes.size();i++) {
         if(lexemes[i] == "error") {
@@ -95,24 +116,27 @@ void LexAnalyzer::writeToFile(ostream &outfile) {
 }
 void LexAnalyzer::scanFile(istream &infile, ostream &outfile) {
     string currentLine;
-    string current = "";
+    string current;
     bool inString = false;
+    bool spaceBefore = true;
 
     while (getline(infile, currentLine)) {
+        if (!currentLine.empty() && currentLine.back() == '\r') {
+            currentLine.pop_back();
+        }
+        spaceBefore = true;
         for(int i=0;i<currentLine.length();i++){
             char ch = currentLine[i];
             
             if (ch == '"') {
-                //first quote, add current lex to array and clear current
                 if (!current.empty() && !inString) {
-                    pushToLexemes(current);
+                    pushToLexemes(current, spaceBefore, false);
                     current.clear();
                 }
-                //push " to current, needed for final checks
                 current += ch;
-                //inString, so the " we hit is closing
                 if (inString) {
-                    pushToLexemes(current);
+                    bool tEndValid = (i == currentLine.size() - 1) || (isValidSymbol(currentLine[i+1]) || isspace(currentLine[i+1]));
+                    pushToLexemes(current, spaceBefore, tEndValid);
                     current.clear();
                     inString = false;
                 } else {
@@ -124,13 +148,14 @@ void LexAnalyzer::scanFile(istream &infile, ostream &outfile) {
             }
             else if (isspace(ch)) {
                 if (!current.empty()) {
-                    pushToLexemes(current);
+                    pushToLexemes(current, spaceBefore, true);
                     current.clear();
                 }
+                spaceBefore = true;
             }
-            else if (isSymbol(ch)) {
+            else if (isValidSymbol(ch)) {
                 if (!current.empty()) {
-                    pushToLexemes(current);
+                    pushToLexemes(current, spaceBefore, true);
                     current.clear();
                 }
 
@@ -142,28 +167,17 @@ void LexAnalyzer::scanFile(istream &infile, ostream &outfile) {
                     i++;
                     op = twoCharOp;
                 }
-                pushToLexemes(op);
+                pushToLexemes(op, spaceBefore, false); 
             }
             else {
                 current += ch;
-                //checks if the current char (letter/num) has a " to its right, which creates error
-                if(currentLine[i+1] == '"') {
-                    string errString = current + currentLine[i+1];
-                    pushStringDelimiterError(errString);
-                    current.clear();
-                }
-                //checks if the current char (letter/num) has a " to its left, which creates error
-                if(i>0 && currentLine[i-1] == '"') {
-                    string errString = current;
-                    pushStringDelimiterError(errString);
-                    current.clear();
-                }
             }
         }
     }
 
     if (!current.empty()) {
-        pushToLexemes(current);
+        pushToLexemes(current, spaceBefore, true);
     }
+
     writeToFile(outfile);
 }

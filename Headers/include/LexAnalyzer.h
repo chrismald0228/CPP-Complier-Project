@@ -1,3 +1,8 @@
+//Christopher Maldonado
+//Aidan Dwyer
+//Cindy Padilla
+//Joshua Morales
+
 #ifndef LEXANALYZER_H
 #define LEXANALYZER_H
 // above can also be achieved with #pragma once
@@ -20,10 +25,10 @@ class LexAnalyzer {
         // other private methods
         bool isValidId(const string& lexeme);
         bool isValidNumber(const string& lexeme);
-        void pushToLexemes(string& lexeme);
+        void pushToLexemes(string& lexeme, bool& spaceBefore, bool tEndValid);
         void writeToFile(ostream& outfile);
-        bool isSymbol(char ch);
-        void pushStringDelimiterError(string& errString);
+        bool isValidSymbol(const char& ch);
+
     public:
         LexAnalyzer(istream& infile);
         // pre: parameter refers to open data file consisting of token and

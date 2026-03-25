@@ -59,8 +59,7 @@ void LexAnalyzer::pushToLexemes(string& lexeme) {
             tokens.push_back(lexeme + ": unclosed string");
         }
         else{
-            //lexemes.push_back(lexeme.substr(1,lexeme.length() -2));
-            lexemes.push_back(lexeme);
+            lexemes.push_back(lexeme.substr(1,lexeme.length() -2));
             tokens.push_back("t_text");
         }
     }

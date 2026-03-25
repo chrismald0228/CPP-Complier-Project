@@ -37,7 +37,7 @@ bool LexAnalyzer::isValidNumber(const string& lexeme) {
     }
     return true;
 }
-
+//searches through tokenmap and compares the symbols(s_ tokens) to the char passed in
 bool LexAnalyzer::isSymbol(char ch) {
     for(pair<string, string> p: tokenmap) {
         if(p.second.rfind("s_", 0) == 0) {
@@ -59,6 +59,7 @@ void LexAnalyzer::pushToLexemes(string& lexeme) {
             tokens.push_back(lexeme + ": unclosed string");
         }
         else{
+            //lexemes.push_back(lexeme.substr(1,lexeme.length() -2));
             lexemes.push_back(lexeme);
             tokens.push_back("t_text");
         }
@@ -76,6 +77,8 @@ void LexAnalyzer::pushToLexemes(string& lexeme) {
         tokens.push_back(lexeme + ": unknown lexeme");
     }
 }
+//error for string delimiter is found during line parsing
+//this function pushes the error to the lexeme/token parallel array
 void LexAnalyzer::pushStringDelimiterError(string& errString) {
     lexemes.push_back("error");
     tokens.push_back(errString + ": string delimiter error");
@@ -126,7 +129,6 @@ void LexAnalyzer::scanFile(istream &infile, ostream &outfile) {
                     current.clear();
                 }
             }
-            //fix string lex reader; " is not a delimiter, so there must be a space after the last one
             else if (isSymbol(ch)) {
                 if (!current.empty()) {
                     pushToLexemes(current);

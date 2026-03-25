@@ -76,7 +76,10 @@ void LexAnalyzer::pushToLexemes(string& lexeme) {
         tokens.push_back(lexeme + ": unknown lexeme");
     }
 }
-
+void LexAnalyzer::pushStringDelimiterError(string& errString) {
+    lexemes.push_back("error");
+    tokens.push_back(errString + ": string delimiter error");
+}
 void LexAnalyzer::writeToFile(ostream &outfile) {
     for(int i=0;i<lexemes.size();i++) {
         if(lexemes[i] == "error") {
@@ -142,6 +145,18 @@ void LexAnalyzer::scanFile(istream &infile, ostream &outfile) {
             }
             else {
                 current += ch;
+                //checks if the current char (letter/num) has a " to its right, which creates error
+                if(currentLine[i+1] == '"') {
+                    string errString = current + currentLine[i+1];
+                    pushStringDelimiterError(errString);
+                    current.clear();
+                }
+                //checks if the current char (letter/num) has a " to its left, which creates error
+                if(i>0 && currentLine[i-1] == '"') {
+                    string errString = current;
+                    pushStringDelimiterError(errString);
+                    current.clear();
+                }
             }
         }
     }

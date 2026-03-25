@@ -23,6 +23,7 @@ class LexAnalyzer {
         void pushToLexemes(string& lexeme);
         void writeToFile(ostream& outfile);
         bool isSymbol(char ch);
+        void pushStringDelimiterError(string& errString);
     public:
         LexAnalyzer(istream& infile);
         // pre: parameter refers to open data file consisting of token and

@@ -18,6 +18,7 @@ private:
     map<string, string> symboltable; 
 
     // other private methods
+    // these can be changed and added to
     bool vdec();
     int vars();
     bool stmtlist();

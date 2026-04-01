@@ -2,6 +2,7 @@
 
 SyntaxAnalyzer::SyntaxAnalyzer(istream& infile){
     string token, lexeme;
+    //get line to read in tokens and lexemes
     while(infile >> token >> lexeme) {
         tokens.push_back(token);
         lexemes.push_back(lexeme);
@@ -16,6 +17,8 @@ bool SyntaxAnalyzer::parse(){
     tokitr = tokens.begin();
     lexitr = lexemes.begin();
 
+    // vdec chack if first value is var. returns true either way
+    // check there are no duplicate vars
     if(!vdec()) {
         cout << "error in line" << *tokitr << endl;
         return 0;

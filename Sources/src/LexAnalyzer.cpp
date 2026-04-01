@@ -1,7 +1,5 @@
 
 #include "LexAnalyzer.h"
-#include <sstream>
-#include <iterator>
 // pre: parameter refers to open data file consisting of token and
 // lexeme pairs i.e.  t_and and
 // Each pair appears on its own input line.
@@ -9,28 +7,10 @@
 
 LexAnalyzer::LexAnalyzer(istream &infile)
 {
-    populateTokenmap(infile);
-}
-
-void LexAnalyzer::populateTokenmap(istream &infile)
-{
-    string line;
-    while (getline(infile, line))
-    {
-        vector<string> lex_pairs = split(line);
-
-        string token = lex_pairs[0];
-        string lexeme = lex_pairs[1];
-
+    string token, lexeme;
+    while(infile >> token >> lexeme) {
         tokenmap[lexeme] = token;
     }
-}
-vector<string> LexAnalyzer::split(const string &line)
-{
-    stringstream stream(line);
-    return vector<string>(
-        istream_iterator<string>{stream},
-        istream_iterator<string>{});
 }
 
 // pre: 1st parameter refers to an open text file that contains source
@@ -57,34 +37,70 @@ bool LexAnalyzer::isValidNumber(const string& lexeme) {
     }
     return true;
 }
+bool LexAnalyzer::isValidSymbol(const char& ch) {
+    for(pair<string, string> p: tokenmap) {
+        if(p.second.rfind("s_", 0) == 0) {
+            if(p.first[0] == ch) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
 
-void LexAnalyzer::pushToLexemes(string& lexeme) {
+void LexAnalyzer::pushToLexemes(string& lexeme, bool& spaceBefore, bool tEndValid) {
+    bool tValid = tEndValid && (spaceBefore || (!tokens.empty() && tokens.back()[0] == 's'));
     if(tokenmap.count(lexeme)){
-        lexemes.push_back(lexeme);
-        tokens.push_back(tokenmap[lexeme]);
+        if (tokenmap[lexeme][0] == 't') {
+            if (tValid) {
+                lexemes.push_back(lexeme);
+                tokens.push_back(tokenmap[lexeme]);
+            } else {
+                lexemes.push_back("error");
+                tokens.push_back(lexeme + ": invalid t_ lexeme");
+            }
+        } else {
+            lexemes.push_back(lexeme);
+            tokens.push_back(tokenmap[lexeme]);
+        }
     } 
     else if(lexeme.front()=='"') {
-        if(lexeme.back() != '"') {
+
+        if(lexeme.back() != '"' || lexeme.length() == 1) {
             lexemes.push_back("error");
             tokens.push_back(lexeme + ": unclosed string");
         }
-        else{
-            lexemes.push_back(lexeme);
+        else if (tValid) {
+            lexemes.push_back(lexeme.substr(1, lexeme.length() - 2));
             tokens.push_back("t_text");
+        } else {
+            lexemes.push_back("error");
+            tokens.push_back(lexeme + ": invalid t_ token ");
         }
     }
     else if(isValidId(lexeme)) {
-        lexemes.push_back(lexeme);
-        tokens.push_back("t_id");
+        if (tValid) {
+            lexemes.push_back(lexeme);
+            tokens.push_back("t_id");
+        } else {
+            lexemes.push_back("error");
+            tokens.push_back(lexeme + ": invalid t_ token");
+        }
     }
     else if(isValidNumber(lexeme)) {
-        lexemes.push_back(lexeme);
-        tokens.push_back("t_number");
+        if (tValid) {
+            lexemes.push_back(lexeme);
+            tokens.push_back("t_number");
+        } else {
+            lexemes.push_back("error");
+            tokens.push_back(lexeme + ": invalid t_ token");
+        }
     }
     else {
         lexemes.push_back("error");
         tokens.push_back(lexeme + ": unknown lexeme");
     }
+    spaceBefore = false;
 }
 
 void LexAnalyzer::writeToFile(ostream &outfile) {
@@ -99,60 +115,68 @@ void LexAnalyzer::writeToFile(ostream &outfile) {
     cout << "success" << endl;
 }
 void LexAnalyzer::scanFile(istream &infile, ostream &outfile) {
-    string current = "";
-    char ch;
+    string currentLine;
+    string current;
     bool inString = false;
+    bool spaceBefore = true;
 
-    while (infile.get(ch)) {
-        if (ch == '"') {
-            //first quote, add current lex to array and clear current
-            if (!current.empty() && !inString) {
-                pushToLexemes(current);
-                current.clear();
-            }
-            //push " to current, needed for final checks
-            current += ch;
-            //inString, so the " we hit is closing
-            if (inString) {
-                pushToLexemes(current);
-                current.clear();
-                inString = false;
-            } else {
-                inString = true;
-            }
+    while (getline(infile, currentLine)) {
+        if (!currentLine.empty() && currentLine.back() == '\r') {
+            currentLine.pop_back();
         }
-        else if (inString) {
-            current += ch;
-        }
-        else if (isspace(ch)) {
-            if (!current.empty()) {
-                pushToLexemes(current);
-                current.clear();
+        spaceBefore = true;
+        for(int i=0;i<currentLine.length();i++){
+            char ch = currentLine[i];
+            
+            if (ch == '"') {
+                if (!current.empty() && !inString) {
+                    pushToLexemes(current, spaceBefore, false);
+                    current.clear();
+                }
+                current += ch;
+                if (inString) {
+                    bool tEndValid = (i == currentLine.size() - 1) || (isValidSymbol(currentLine[i+1]) || isspace(currentLine[i+1]));
+                    pushToLexemes(current, spaceBefore, tEndValid);
+                    current.clear();
+                    inString = false;
+                } else {
+                    inString = true;
+                }
             }
-        }
-        else if (ispunct(ch)) {
-            if (!current.empty()) {
-                pushToLexemes(current);
-                current.clear();
+            else if (inString) {
+                current += ch;
             }
+            else if (isspace(ch)) {
+                if (!current.empty()) {
+                    pushToLexemes(current, spaceBefore, true);
+                    current.clear();
+                }
+                spaceBefore = true;
+            }
+            else if (isValidSymbol(ch)) {
+                if (!current.empty()) {
+                    pushToLexemes(current, spaceBefore, true);
+                    current.clear();
+                }
 
-            string op(1, ch);
+                string op(1, ch);
 
-            char next = infile.peek();
-            string twoCharOp = op + next;
-            if (tokenmap.count(twoCharOp)) {
-                infile.get();
-                op = twoCharOp;
+                char next = currentLine[i+1];
+                string twoCharOp = op + next;
+                if (tokenmap.count(twoCharOp)) {
+                    i++;
+                    op = twoCharOp;
+                }
+                pushToLexemes(op, spaceBefore, false); 
             }
-            pushToLexemes(op);
-        }
-        else {
-            current += ch;
+            else {
+                current += ch;
+            }
         }
     }
 
     if (!current.empty()) {
-        pushToLexemes(current);
+        pushToLexemes(current, spaceBefore, true);
     }
 
     writeToFile(outfile);

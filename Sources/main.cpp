@@ -5,12 +5,17 @@
 using namespace std;
 
 #include "LexAnalyzer.h"
+#include "SyntaxAnalyzer.h"
 
 int main() {
-    ifstream lexemes("lexemes.txt");
-    ifstream source("source.txt");
-    ofstream sourcelexemes("sourcelexemes.txt");
-    LexAnalyzer lexanalyzer(lexemes);
-    lexanalyzer.scanFile(source, sourcelexemes);
+    // ifstream lexemes("lexemes.txt");
+    // ifstream source("source.txt");
+    // ofstream sourcelexemes("sourcelexemes.txt");
+    // LexAnalyzer lexanalyzer(lexemes);
+    // lexanalyzer.scanFile(source, sourcelexemes);
+
+    ifstream infile("data.txt");
+    SyntaxAnalyzer syntaxanalyzer(infile);
+    syntaxanalyzer.parse();
     return 0;
 }

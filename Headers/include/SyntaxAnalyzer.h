@@ -28,6 +28,9 @@ private:
     bool assignstmt();
     bool inputstmt();
     bool outputstmt();
+
+    bool logexpr();
+
     bool expr();
     bool simpleexpr();
     bool term();

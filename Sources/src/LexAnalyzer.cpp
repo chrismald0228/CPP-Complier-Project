@@ -112,7 +112,7 @@ void LexAnalyzer::writeToFile(ostream &outfile) {
         }
         outfile << tokens[i] << " " << lexemes[i] << endl;
     }
-    cout << "success" << endl;
+    cout << "success lex" << endl;
 }
 void LexAnalyzer::scanFile(istream &infile, ostream &outfile) {
     string currentLine;

@@ -31,16 +31,13 @@ private:
     bool assignstmt();
     bool inputstmt();
     bool outputstmt();
-
+    void printError();
     bool logexpr();
     bool arithexpr();
     bool relexpr();
     bool strterm();
     bool numterm();
 
-    bool expr();
-    bool simpleexpr();
-    bool term();
     bool logicop();
     bool arithop();
     bool relop();

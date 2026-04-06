@@ -1,3 +1,0 @@
-t_var var
-t_main main
-t_end end

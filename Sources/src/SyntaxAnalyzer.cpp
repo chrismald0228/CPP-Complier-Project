@@ -3,7 +3,6 @@
 SyntaxAnalyzer::SyntaxAnalyzer(istream& infile){
     string token, lexeme;
     string line;
-    cout << "SyntaxAnalyzer constructor called" << endl;
     while(getline(infile, line)) {
         int spacePos = line.find(' ');
         string token = line.substr(0, spacePos);
@@ -21,8 +20,6 @@ bool SyntaxAnalyzer::parse(){
     tokitr = tokens.begin();
     lexitr = lexemes.begin();
 
-    // vdec chack if first value is var. returns true either way
-    // check there are no duplicate vars
     if(!vdec()) {
         if(tokitr != tokens.end())
             cout << "error in line " << *tokitr << endl;
@@ -53,35 +50,19 @@ bool SyntaxAnalyzer::parse(){
     }
     return 0;
 }
-bool SyntaxAnalyzer::relexpr() {
-    return true;
-}
-bool SyntaxAnalyzer::vars() {
-    if(tokitr != tokens.end() && *tokitr == "t_id") {
-        tokitr++; lexitr++;
-        return true;
+
+void SyntaxAnalyzer::printError() {
+    if(tokitr == tokens.end()){
+        cout << "hit end of file" << endl;
     }
-    return false;
+    cout << "Error in" << *tokitr << " : " << *lexitr << endl;
 }
-bool SyntaxAnalyzer::strterm() {
-    return true;
-}
-bool SyntaxAnalyzer::arithexpr() {
-    return true;
-}
-bool SyntaxAnalyzer::stmt() {
-    if(tokitr != tokens.end() && *tokitr == "t_if") {
-        tokitr++; lexitr++;
-        return true;
-    }
-    return false;
-}
+
 bool SyntaxAnalyzer::vdec(){
-    cout << "vdec called" << endl;
     if(tokitr != tokens.end() && *tokitr == "t_var") {
-        cout << "t_var found" << endl;
         tokitr++; lexitr++;
         if(!vars()) {
+            printError();
             return false;
         }
         bool moreVars = true;
@@ -93,7 +74,7 @@ bool SyntaxAnalyzer::vdec(){
     }
     return true;
 }
-// fix
+
 bool SyntaxAnalyzer::stmtlist(){
     bool moreStmts = true;
     while(moreStmts) {
@@ -109,6 +90,7 @@ bool SyntaxAnalyzer::ifstmt(){
         if(tokitr != tokens.end() && *tokitr =="s_lparen") {
             tokitr++; lexitr++;
             if(!logexpr()) {
+                printError();
                 return false;
             }
             if(tokitr != tokens.end() && *tokitr == "s_rparen") {
@@ -116,9 +98,11 @@ bool SyntaxAnalyzer::ifstmt(){
                 if(tokitr != tokens.end() && *tokitr == "t_then") {
                     tokitr++; lexitr++;
                     if(!stmtlist()) {
+                        printError();
                         return false;
                     }
                     if(!elsepart()) {
+                        printError();
                         return false;
                     }
                     if(tokitr != tokens.end() && *tokitr == "t_end") {
@@ -131,15 +115,18 @@ bool SyntaxAnalyzer::ifstmt(){
                 }
             }
         }
+        printError();
         return false;
     }
-    // return true;
+    printError();
     return false;
 }
 bool SyntaxAnalyzer::elsepart(){
     if(tokitr != tokens.end() && *tokitr == "t_else") {
+        cout << "in else" << endl;
         tokitr++; lexitr++;
         if(!stmtlist()) {
+            printError();
             return false;
         }
     }
@@ -150,28 +137,33 @@ bool SyntaxAnalyzer::assignstmt(){
     string idType;
     if(tokitr != tokens.end() && *tokitr == "t_id") {
         id = *lexitr;
-        if(symboltable.count(id)) {
-            idType = symboltable.at(id);
+        if(!symboltable.count(id)) {
+            printError();
+            return false;
         }
+        idType = symboltable.at(id);
         tokitr++; lexitr++;
         if(tokitr != tokens.end() && *tokitr == "s_assign") {
             tokitr++; lexitr++;
             if(idType == "t_integer") {
                 if(!arithexpr()) {
+                    printError();
                     return false;
                 }
             }
             else if(idType == "t_string") {
                 if(!strterm()) {
+                    printError();
                     return false;
                 }
             }
-            if(tokitr != tokens.end() && *tokitr == "s_semicolon") {
+            if(tokitr != tokens.end() && *tokitr == "s_semi") {
                 tokitr++; lexitr++;
                 return true;
             }
         }
     }
+    printError();
     return false;
 }
 bool SyntaxAnalyzer::outputstmt() {
@@ -180,6 +172,7 @@ bool SyntaxAnalyzer::outputstmt() {
         if(tokitr != tokens.end() && *tokitr == "s_lparen") {
             tokitr++; lexitr++;
             if(!numterm() && !strterm()) {
+                printError();
                 return false;
             }
             if(tokitr != tokens.end() && *tokitr == "s_rparen") {
@@ -188,10 +181,12 @@ bool SyntaxAnalyzer::outputstmt() {
             }
         }
     }
+    printError();
     return false;
 }
 bool SyntaxAnalyzer::logexpr() {
     if(!relexpr()){
+        printError();
         return false;
     }
     bool moreLogicOps = true;
@@ -199,7 +194,7 @@ bool SyntaxAnalyzer::logexpr() {
     while(moreLogicOps && moreRelExpers) {
         if(!logicop()) {
             moreLogicOps = false;
-        }
+        }   
         if(!relexpr()) {
             moreRelExpers = false;
         }
@@ -218,6 +213,7 @@ bool SyntaxAnalyzer::numterm() {
             return true;
         }
     }
+    printError();
     return false;
 }
 bool SyntaxAnalyzer::logicop() {
@@ -229,6 +225,7 @@ bool SyntaxAnalyzer::logicop() {
         tokitr++; lexitr++;
         return true;
     }
+    printError();
     return false;
 }
 // pre: none

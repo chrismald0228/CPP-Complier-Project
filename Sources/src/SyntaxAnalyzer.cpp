@@ -21,6 +21,8 @@ bool SyntaxAnalyzer::parse(){
     tokitr = tokens.begin();
     lexitr = lexemes.begin();
 
+    // vdec chack if first value is var. returns true either way
+    // check there are no duplicate vars
     if(!vdec()) {
         if(tokitr != tokens.end())
             cout << "error in line " << *tokitr << endl;

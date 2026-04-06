@@ -30,6 +30,9 @@ private:
     bool outputstmt();
 
     bool logexpr();
+    bool arithexpr();
+    bool strterm();
+    bool numterm();
 
     bool expr();
     bool simpleexpr();

@@ -69,9 +69,7 @@ int SyntaxAnalyzer::vars(){
 // fix
 bool SyntaxAnalyzer::stmtlist(){
     if(!stmt()) {
-        if(tokitr != tokens.end())
-            cout << "error in line " << *tokitr << endl;
-        return 0;
+        return false;
     }
     return true;
 }
@@ -116,6 +114,51 @@ bool SyntaxAnalyzer::elsepart(){
         }
     }
     return true;
+}
+bool SyntaxAnalyzer::assignstmt(){
+    string id;
+    string idType;
+    if(tokitr != tokens.end() && *tokitr == "t_id") {
+        id = *lexitr;
+        if(symboltable.count(id)) {
+            idType = symboltable.at(id);
+        }
+        tokitr++; lexitr++;
+        if(tokitr != tokens.end() && *tokitr == "s_assign") {
+            tokitr++; lexitr++;
+            if(idType == "t_integer") {
+                if(!arithexpr()) {
+                    return false;
+                }
+            }
+            else if(idType == "t_string") {
+                if(!strterm()) {
+                    return false;
+                }
+            }
+            if(tokitr != tokens.end() && *tokitr == "s_semicolon") {
+                tokitr++; lexitr++;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+bool SyntaxAnalyzer::outputstmt() {
+    if(tokitr != tokens.end() && *tokitr == "t_output") {
+        tokitr++; lexitr++;
+        if(tokitr != tokens.end() && *tokitr == "s_lparen") {
+            tokitr++; lexitr++;
+            if(!numterm() && !strterm()) {
+                return false;
+            }
+            if(tokitr != tokens.end() && *tokitr == "s_rparen") {
+                tokitr++; lexitr++;
+                return true;
+            }
+        }
+    }
+    return false;
 }
 // pre: none
 // post: The lexemes/tokens have been parsed.

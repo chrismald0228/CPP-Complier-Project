@@ -20,15 +20,24 @@ private:
     // other private methods
     // these can be changed and added to
     bool vdec();
-    int vars();
+    // int vars();
+    bool vars();
     bool stmtlist();
-    int stmt();
+    // int stmt();
+    bool stmt();
     bool ifstmt();
     bool elsepart();
     bool whilestmt();
     bool assignstmt();
     bool inputstmt();
     bool outputstmt();
+
+    bool logexpr();
+    bool arithexpr();
+    bool relexpr();
+    bool strterm();
+    bool numterm();
+
     bool expr();
     bool simpleexpr();
     bool term();

@@ -10,7 +10,8 @@ include_directories(Headers/include)
 add_executable(Compiler
     Sources/main.cpp
     Sources/src/LexAnalyzer.cpp
+    Sources/src/SyntaxAnalyzer.cpp
 )
 
 # Copy .txt files to build folder so your program can find them at runtime
-file(COPY lexemes.txt source.txt DESTINATION ${CMAKE_BINARY_DIR})
+file(COPY lexemes.txt source.txt data.txt DESTINATION ${CMAKE_BINARY_DIR})

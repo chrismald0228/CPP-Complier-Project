@@ -51,7 +51,29 @@ bool SyntaxAnalyzer::parse(){
     }
     return 0;
 }
-
+bool SyntaxAnalyzer::relexpr() {
+    return true;
+}
+bool SyntaxAnalyzer::vars() {
+    if(tokitr != tokens.end() && *tokitr == "t_id") {
+        tokitr++; lexitr++;
+        return true;
+    }
+    return false;
+}
+bool SyntaxAnalyzer::strterm() {
+    return true;
+}
+bool SyntaxAnalyzer::arithexpr() {
+    return true;
+}
+bool SyntaxAnalyzer::stmt() {
+    if(tokitr != tokens.end() && *tokitr == "t_if") {
+        tokitr++; lexitr++;
+        return true;
+    }
+    return false;
+}
 bool SyntaxAnalyzer::vdec(){
     cout << "vdec called" << endl;
     if(tokitr != tokens.end() && *tokitr == "t_var") {
@@ -167,7 +189,7 @@ bool SyntaxAnalyzer::outputstmt() {
     return false;
 }
 bool SyntaxAnalyzer::logexpr() {
-    if(!relexpr){
+    if(!relexpr()){
         return false;
     }
     bool moreLogicOps = true;

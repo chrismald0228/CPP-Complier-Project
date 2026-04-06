@@ -19,9 +19,11 @@ private:
 
     // other private methods
     bool vdec();
-    int vars();
+    // int vars();
+    bool vars();
     bool stmtlist();
-    int stmt();
+    // int stmt();
+    bool stmt();
     bool ifstmt();
     bool elsepart();
     bool whilestmt();

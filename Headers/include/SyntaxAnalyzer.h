@@ -31,6 +31,7 @@ private:
 
     bool logexpr();
     bool arithexpr();
+    bool relexpr();
     bool strterm();
     bool numterm();
 

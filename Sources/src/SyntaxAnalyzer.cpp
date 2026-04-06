@@ -60,16 +60,22 @@ bool SyntaxAnalyzer::vdec(){
         if(!vars()) {
             return false;
         }
+        bool moreVars = true;
+        while(moreVars) {
+            if(!vars()) {
+                moreVars = false;
+            }
+        }
     }
-    return true;
-}
-int SyntaxAnalyzer::vars(){
     return true;
 }
 // fix
 bool SyntaxAnalyzer::stmtlist(){
-    if(!stmt()) {
-        return false;
+    bool moreStmts = true;
+    while(moreStmts) {
+        if(!stmt()) {
+            moreStmts = false;
+        }
     }
     return true;
 }
@@ -157,6 +163,47 @@ bool SyntaxAnalyzer::outputstmt() {
                 return true;
             }
         }
+    }
+    return false;
+}
+bool SyntaxAnalyzer::logexpr() {
+    if(!relexpr){
+        return false;
+    }
+    bool moreLogicOps = true;
+    bool moreRelExpers = true;
+    while(moreLogicOps && moreRelExpers) {
+        if(!logicop()) {
+            moreLogicOps = false;
+        }
+        if(!relexpr()) {
+            moreRelExpers = false;
+        }
+    }
+    return true;
+}
+bool SyntaxAnalyzer::numterm() {
+    if(tokitr != tokens.end() && *tokitr == "t_number") {
+        tokitr++; lexitr++;
+        return true;
+    }
+    if(tokitr != tokens.end() && *tokitr == "t_id") {
+        string id = *lexitr;
+        if(symboltable.count(id) && symboltable.at(id) == "t_integer") {
+            tokitr++; lexitr++;
+            return true;
+        }
+    }
+    return false;
+}
+bool SyntaxAnalyzer::logicop() {
+    if(tokitr != tokens.end() && *tokitr == "t_and") {
+        tokitr++; lexitr++;
+        return true;
+    }
+    if(tokitr != tokens.end() && *tokitr == "t_or") {
+        tokitr++; lexitr++;
+        return true;
     }
     return false;
 }

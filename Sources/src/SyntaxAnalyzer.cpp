@@ -1,5 +1,5 @@
+// Alex and Chris 4/8/26
 #include "SyntaxAnalyzer.h"
-
 #include <iostream>
 #include <fstream>
 #include <map>
@@ -8,8 +8,11 @@ using namespace std;
 
 SyntaxAnalyzer::SyntaxAnalyzer(istream& infile) {
     string token, lexeme;
-    while (infile >> token >> lexeme) {
-        cout << token << " " << lexeme << endl;
+    string line;
+    while(getline(infile, line)) {
+        int spacePos = line.find(' ');
+        string token = line.substr(0, spacePos);
+        string lexeme = line.substr(spacePos + 1);
         tokens.push_back(token);
         lexemes.push_back(lexeme);
     }
@@ -27,6 +30,7 @@ bool SyntaxAnalyzer::parse() {
                 cout << "error in source: invalid statement list" << endl;
                 return false;
             }
+            cout << *tokitr << " : " << *lexitr << endl;
             if (tokitr != tokens.end() && *tokitr == "t_end") {
                 tokitr++; lexitr++;
                 cout << "Success" << endl;
@@ -48,11 +52,14 @@ bool SyntaxAnalyzer::vdec(){
 
             return false;
         }
-        bool moreVars = true;
-        while(moreVars) {
-            if(!vars()) {
-                moreVars = false;
-            }
+        // bool moreVars = true;
+        // while(moreVars) {
+        //     if(!vars()) {
+        //         moreVars = false;
+        //     }
+        // }
+        while(tokitr != tokens.end() && (*tokitr == "t_integer" || *tokitr == "t_string")) {
+            if(!vars()) break;
         }
     }
     return true;
@@ -67,13 +74,13 @@ bool SyntaxAnalyzer::stmtlist(){
     }
     return true;
 }
+
 bool SyntaxAnalyzer::ifstmt(){
     if(tokitr != tokens.end() && *tokitr == "t_if") {
         tokitr++; lexitr++;
         if(tokitr != tokens.end() && *tokitr =="s_lparen") {
             tokitr++; lexitr++;
             if(!logexpr()) {
-
                 return false;
             }
             if(tokitr != tokens.end() && *tokitr == "s_rparen") {
@@ -98,7 +105,6 @@ bool SyntaxAnalyzer::ifstmt(){
                 }
             }
         }
-
         return false;
     }
     return false;
@@ -128,7 +134,6 @@ bool SyntaxAnalyzer::assignstmt(){
             tokitr++; lexitr++;
             if(idType == "t_integer") {
                 if(!arithexpr()) {
-
                     return false;
                 }
             }
@@ -167,17 +172,22 @@ bool SyntaxAnalyzer::outputstmt() {
 }
 bool SyntaxAnalyzer::logexpr() {
     if(!relexpr()){
-
         return false;
     }
-    bool moreLogicOps = true;
-    bool moreRelExpers = true;
-    while(moreLogicOps && moreRelExpers) {
-        if(!logicop()) {
-            moreLogicOps = false;
-        }
+    // bool moreLogicOps = true;
+    // bool moreRelExpers = true;
+    // while(moreLogicOps && moreRelExpers) {
+    //     if(!logicop()) {
+    //         moreLogicOps = false;
+    //     }
+    //     if(!relexpr()) {
+    //         moreRelExpers = false;
+    //     }
+    // }
+    while(tokitr != tokens.end()) {
+        if(!logicop()) break;
         if(!relexpr()) {
-            moreRelExpers = false;
+            return false;
         }
     }
     return true;
@@ -206,7 +216,7 @@ bool SyntaxAnalyzer::logicop() {
         tokitr++; lexitr++;
         return true;
     }
-    
+
     return false;
 }
 
@@ -393,15 +403,4 @@ bool SyntaxAnalyzer::arithop() {
     }
     tokitr++; lexitr++;
     return false;
-}
-
-int main() {
-    ifstream infile("data.txt");
-    if (!infile) {
-        cout << "Error: could not open data.txt" << endl;
-        return 1;
-    }
-    SyntaxAnalyzer syntaxanalyzer(infile);
-    syntaxanalyzer.parse();
-    return 0;
 }

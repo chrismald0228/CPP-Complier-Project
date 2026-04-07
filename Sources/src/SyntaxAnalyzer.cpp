@@ -30,7 +30,6 @@ bool SyntaxAnalyzer::parse() {
                 cout << "error in source: invalid statement list" << endl;
                 return false;
             }
-            cout << *tokitr << " : " << *lexitr << endl;
             if (tokitr != tokens.end() && *tokitr == "t_end") {
                 tokitr++; lexitr++;
                 cout << "Success" << endl;

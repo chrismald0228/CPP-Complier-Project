@@ -6,24 +6,19 @@
 #include <vector>
 #include <map>
 using namespace std;
-
-class SyntaxAnalyzer{
+class SyntaxAnalyzer {
 private:
     vector<string> lexemes;
     vector<string> tokens;
     vector<string>::iterator lexitr;
     vector<string>::iterator tokitr;
-    // map of variables and their datatype
-    // i.e. sum t_integer
-    map<string, string> symboltable; 
 
-    // other private methods
-    // these can be changed and added to
+    map<string, string> symboltable;
+
     bool vdec();
-    // int vars();
     bool vars();
+    bool type();
     bool stmtlist();
-    // int stmt();
     bool stmt();
     bool ifstmt();
     bool elsepart();
@@ -31,30 +26,25 @@ private:
     bool assignstmt();
     bool inputstmt();
     bool outputstmt();
-    void printError();
     bool logexpr();
-    bool arithexpr();
     bool relexpr();
-    bool strterm();
+    bool arithexpr();
     bool numterm();
-
+    bool strterm();
     bool logicop();
     bool arithop();
     bool relop();
 
 public:
+    // pre:  infile is an open file containing valid scanner/lexer output
+    //       in the form:  token lexeme  (one pair per line)
+    // post: tokens and lexemes vectors have been populated
     SyntaxAnalyzer(istream& infile);
-    // pre: 1st parameter consists of an open file containing a source code's
-    //	valid scanner/lexical analyzer output.  This data must be in the form: token : lexeme
-    // post: the vectors have been populated
 
+    // pre:  none
+    // post: lexemes/tokens have been parsed.
+    //       Prints error messages for any bad token/lexeme pair found.
+    //       Returns true on success, false on failure.
     bool parse();
-    // pre: none
-    // post: The lexemes/tokens have been parsed.
-    // If an error occurs, a message prints indicating the token/lexeme pair
-    // that caused the error.
-    // If no error, vectors contain syntactically correct source code
-	// PROG  -> VDEC main STMTLIST end 
 };
-
 #endif

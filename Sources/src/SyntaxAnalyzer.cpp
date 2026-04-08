@@ -8,11 +8,7 @@ using namespace std;
 
 SyntaxAnalyzer::SyntaxAnalyzer(istream& infile) {
     string token, lexeme;
-    string line;
-    while(getline(infile, line)) {
-        int spacePos = line.find(' ');
-        string token = line.substr(0, spacePos);
-        string lexeme = line.substr(spacePos + 1);
+    while (infile >> token >> lexeme) {
         tokens.push_back(token);
         lexemes.push_back(lexeme);
     }
@@ -48,15 +44,9 @@ bool SyntaxAnalyzer::vdec(){
     if(tokitr != tokens.end() && *tokitr == "t_var") {
         tokitr++; lexitr++;
         if(!vars()) {
-
+            cout << "error in vdec: " << *tokitr << " :: " << *lexitr << endl;
             return false;
         }
-        // bool moreVars = true;
-        // while(moreVars) {
-        //     if(!vars()) {
-        //         moreVars = false;
-        //     }
-        // }
         while(tokitr != tokens.end() && (*tokitr == "t_integer" || *tokitr == "t_string")) {
             if(!vars()) break;
         }
@@ -80,6 +70,7 @@ bool SyntaxAnalyzer::ifstmt(){
         if(tokitr != tokens.end() && *tokitr =="s_lparen") {
             tokitr++; lexitr++;
             if(!logexpr()) {
+                cout << "error in ifstmt: logexpr failed with " << *tokitr << " :: " << *lexitr << endl;
                 return false;
             }
             if(tokitr != tokens.end() && *tokitr == "s_rparen") {
@@ -87,11 +78,11 @@ bool SyntaxAnalyzer::ifstmt(){
                 if(tokitr != tokens.end() && *tokitr == "t_then") {
                     tokitr++; lexitr++;
                     if(!stmtlist()) {
-
+                        cout << "error in ifstmt: stmtlist failed with " << *tokitr << " :: " << *lexitr << endl;
                         return false;
                     }
                     if(!elsepart()) {
-
+                        cout << "error in ifstmt: elsepart failed with " << *tokitr << " :: " << *lexitr << endl;
                         return false;
                     }
                     if(tokitr != tokens.end() && *tokitr == "t_end") {
@@ -104,6 +95,7 @@ bool SyntaxAnalyzer::ifstmt(){
                 }
             }
         }
+        cout << "error in ifstmt: "  << *tokitr << " :: " << *lexitr << endl;
         return false;
     }
     return false;
@@ -113,6 +105,7 @@ bool SyntaxAnalyzer::elsepart(){
         cout << "in else" << endl;
         tokitr++; lexitr++;
         if(!stmtlist()) {
+            cout << "error in elsepart: stmtlist failed with " << *tokitr << " :: " << *lexitr << endl;
             return false;
         }
     }
@@ -124,7 +117,7 @@ bool SyntaxAnalyzer::assignstmt(){
     if(tokitr != tokens.end() && *tokitr == "t_id") {
         id = *lexitr;
         if(!symboltable.count(id)) {
-
+            cout << "error in assignstmt: id not defined " << *tokitr << " :: " << *lexitr << endl;
             return false;
         }
         idType = symboltable.at(id);
@@ -133,12 +126,13 @@ bool SyntaxAnalyzer::assignstmt(){
             tokitr++; lexitr++;
             if(idType == "t_integer") {
                 if(!arithexpr()) {
+                    cout << "error in assignstmt: arithop failed with " << *tokitr << " :: " << *lexitr << endl;
                     return false;
                 }
             }
             else if(idType == "t_string") {
                 if(!strterm()) {
-
+                    cout << "error in assignstmt: strterm failed with " << *tokitr << " :: " << *lexitr << endl;
                     return false;
                 }
             }
@@ -148,7 +142,7 @@ bool SyntaxAnalyzer::assignstmt(){
             }
         }
     }
-
+    cout << "error in assignstmt: missing id " << *tokitr << " :: " << *lexitr << endl;
     return false;
 }
 bool SyntaxAnalyzer::outputstmt() {
@@ -157,7 +151,7 @@ bool SyntaxAnalyzer::outputstmt() {
         if(tokitr != tokens.end() && *tokitr == "s_lparen") {
             tokitr++; lexitr++;
             if(!numterm() && !strterm()) {
-
+                cout << "error in outputstmt: " << *tokitr << " :: " << *lexitr << endl;
                 return false;
             }
             if(tokitr != tokens.end() && *tokitr == "s_rparen") {
@@ -173,19 +167,11 @@ bool SyntaxAnalyzer::logexpr() {
     if(!relexpr()){
         return false;
     }
-    // bool moreLogicOps = true;
-    // bool moreRelExpers = true;
-    // while(moreLogicOps && moreRelExpers) {
-    //     if(!logicop()) {
-    //         moreLogicOps = false;
-    //     }
-    //     if(!relexpr()) {
-    //         moreRelExpers = false;
-    //     }
-    // }
+
     while(tokitr != tokens.end()) {
         if(!logicop()) break;
         if(!relexpr()) {
+            cout << "error in logexpr: relexpr failed with " << *tokitr << " :: " << *lexitr << endl;
             return false;
         }
     }
@@ -203,7 +189,6 @@ bool SyntaxAnalyzer::numterm() {
             return true;
         }
     }
-
     return false;
 }
 bool SyntaxAnalyzer::logicop() {
@@ -215,7 +200,6 @@ bool SyntaxAnalyzer::logicop() {
         tokitr++; lexitr++;
         return true;
     }
-
     return false;
 }
 
@@ -224,7 +208,7 @@ bool SyntaxAnalyzer::vars() {
     if (tokitr == tokens.end()){ return false;}
     string varType = *tokitr;
     if (!type()) {
-        cout << "error in vars: expected type" << endl;
+        cout << "error in vars: expected type"  << *tokitr << " :: " << *lexitr << endl;
         return false;
     }
     if (tokitr != tokens.end() && *tokitr == "t_id") {
@@ -244,7 +228,7 @@ bool SyntaxAnalyzer::vars() {
                 symboltable[*lexitr] = varType;
                 tokitr++; lexitr++;
             } else {
-                cout << "error in vars: expected id after comma" << endl;
+                cout << "error in vars: expected id after comma" << *tokitr << " :: " << *lexitr << endl;
                 return false;
             }
         }
@@ -252,10 +236,10 @@ bool SyntaxAnalyzer::vars() {
             tokitr++; lexitr++;
             return true;
         }
-        cout << "error in vars: expected semicolon" << endl;
+        cout << "error in vars: expected semicolon" << *tokitr << " :: " << *lexitr << endl;
         return false;
     }
-    cout << "error in vars: expected id" << endl;
+    cout << "error in vars: expected id" << *tokitr << " :: " << *lexitr << endl;
     return false;
 }
 
@@ -270,12 +254,12 @@ bool SyntaxAnalyzer::type() {
 
 
 bool SyntaxAnalyzer::stmt() {
-    if (tokitr == tokens.end()) { return false;}
-    if (*tokitr == "t_if") {     return ifstmt();}
-    if (*tokitr == "t_while") {  return whilestmt();}
-    if (*tokitr == "t_id") {    return assignstmt();}
-    if (*tokitr == "t_input") { return inputstmt();}
-    if (*tokitr == "t_output") { return outputstmt();}
+    if (tokitr == tokens.end()) {return false;}
+    if (*tokitr == "t_if") {return ifstmt();}
+    if (*tokitr == "t_while") {return whilestmt();}
+    if (*tokitr == "t_id") {return assignstmt();}
+    if (*tokitr == "t_input") {return inputstmt();}
+    if (*tokitr == "t_output") {return outputstmt();}
     return false;
 }
 
@@ -285,7 +269,7 @@ bool SyntaxAnalyzer::whilestmt() {
         if (tokitr != tokens.end() && *tokitr == "s_lparen") {
             tokitr++; lexitr++;
             if (!logexpr()) {
-                cout << "error in whilestmt: invalid logical expression" << endl;
+                cout << "error in whilestmt: invalid logical expression" << *tokitr << " :: " << *lexitr << endl;
                 return false;
             }
             if (tokitr != tokens.end() && *tokitr == "s_rparen") {
@@ -293,7 +277,7 @@ bool SyntaxAnalyzer::whilestmt() {
                 if (tokitr != tokens.end() && *tokitr == "t_loop") {
                     tokitr++; lexitr++;
                     if (!stmtlist()) {
-                        cout << "error in whilestmt: invalid statement list" << endl;
+                        cout << "error in whilestmt: invalid statement list" << *tokitr << " :: " << *lexitr << endl;
                         return false;
                     }
                     if (tokitr != tokens.end() && *tokitr == "t_end") {
@@ -307,7 +291,7 @@ bool SyntaxAnalyzer::whilestmt() {
             }
         }
     }
-    cout << "error in whitestmt" << endl;
+    cout << "error in whilestmt" << *tokitr << " :: " << *lexitr << endl;
     return false;
 }
 
@@ -325,21 +309,21 @@ bool SyntaxAnalyzer::inputstmt() {
             }
         }
     }
-    cout << "error in inputstmt" << endl;
+    cout << "error in inputstmt" << *tokitr << " :: " << *lexitr << endl;
     return false;
 }
 
 bool SyntaxAnalyzer::relexpr() {
     if (!arithexpr()) {
-        cout << "error in relexpr" << endl;
+        cout << "error in relexpr"<< *tokitr << " :: " << *lexitr << endl;
         return false;
     }
     if (!relop()) {
-        cout << "error in relexpr" << endl;
+        cout << "error in relexpr" << *tokitr << " :: " << *lexitr << endl;
         return false;
     }
     if (!arithexpr()) {
-        cout << "error in relexpr" << endl;
+        cout << "error in relexpr" << *tokitr << " :: " << *lexitr << endl;
         return false;
     }
     return true;
@@ -347,7 +331,7 @@ bool SyntaxAnalyzer::relexpr() {
 
 bool SyntaxAnalyzer::arithexpr() {
     if (!numterm()) {
-        cout << "error in arithexpr: expected number or integer id" << endl;
+        cout << "error in arithexpr: expected number or integer id" << *tokitr << " :: " << *lexitr << endl;
         return false;
     }
     while (tokitr != tokens.end() &&
@@ -355,7 +339,7 @@ bool SyntaxAnalyzer::arithexpr() {
             *tokitr == "s_div"  || *tokitr == "s_mod")) {
         arithop();
         if (!numterm()) {
-            cout << "error in arithexpr: expected numterm after operator" << endl;
+            cout << "error in arithexpr: expected numterm after operator" << *tokitr << " :: " << *lexitr << endl;
             return false;
         }
     }
@@ -373,7 +357,7 @@ bool SyntaxAnalyzer::strterm() {
             return false;
         }
         if (symboltable[*lexitr] != "t_string") {
-            cout << "error in strterm: type mismatch" << endl;
+            cout << "error in strterm: type mismatch" << *tokitr << " :: " << *lexitr << endl;
             return false;
         }
         tokitr++; lexitr++;
